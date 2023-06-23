@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ecommerce-api
+
+  Powertools for AWS Lambda (Python) example
+
+Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy-globals.html
+  Function:
+    Timeout: 5
+    MemorySize: 128
+    Runtime: python3.10
+    Tracing: Active
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref EcommerceAppTable
+        POWERTOOLS_SERVICE_NAME: ecommerce-api
+        POWERTOOLS_METRICS_NAMESPACE: ecommerce-api-metric
+        LOG_LEVEL: DEBUG
+        POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
+        POWERTOOLS_LOGGER_LOG_EVENT: true
+
+
+Resources:
+
+  RESTAPIAccessLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: ecommerce-api-Access-Logs
+      RetentionInDays: 1
+
+  RESTAPIRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - apigateway.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+      - PolicyName: AllowSqsIntegration
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - 'logs:CreateLogGroup'
+                - 'logs:CreateLogStream'
+                - 'logs:DescribeLogGroups'
+                - 'logs:DescribeLogStreams'
+                - 'logs:PutLogEvents'
+                - 'logs:GetLogEvents'
+                - 'logs:FilterLogEvents'
+              Resource: !GetAtt RESTAPIAccessLogs.Arn
+
+  EcommerceRESTAPI:
+    Type: AWS::Serverless::Api
+    Properties:
+      Description: ecommerce api with api-key authentication
+      Name: EcommerceRESTAPI
+      StageName: Dev
+      Auth:
+        ApiKeyRequired: true # sets for all methods
+
+  ProductLambdaFunction:
+    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: src
+      Description: Lambda function for all product endpoints
+      Architectures:
+      - x86_64
+      Tracing: Active
+      Events:
+        LoadProductPath:
+          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Properties:
+            Path: /loadProducts
+            Method: POST
+            RestApiId: !Ref EcommerceRESTAPI
+            Auth:
+              ApiKeyRequired: true
+             # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+        GetProductPath:
+          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Properties:
+            Path: /products/{product_id}
+            Method: GET
+            RestApiId: !Ref EcommerceRESTAPI
+            Auth:
+              ApiKeyRequired: true
+             # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+        GetProductsPath:
+          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Properties:
+            Path: /products
+            Method: GET
+            RestApiId: !Ref EcommerceRESTAPI
+            Auth:
+              ApiKeyRequired: true
+             # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+
+    Connectors:
+      productConnectors:
+        Properties:
+          Destination:
+            Id: EcommerceAppTable
+          Permissions:
+            - Write
+            - Read
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+
+  EcommerceAppTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+Outputs:
+  EcommerceRestApi:
+    Description: API Gateway endpoint URL for Dev environment for ecommerce rest api
+    Value: !Sub "https://${EcommerceRESTAPI}.execute-api.${AWS::Region}.amazonaws.com/Dev"
+
+  ProductLambdaFunction:
+    Description: Product Lambda Function ARN
+    Value: !GetAtt ProductLambdaFunction.Arn
+
