@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src import app
+from src import product
 
 def lambda_context():
     class LambdaContext:
@@ -137,7 +137,7 @@ def apigw_event():
 
 def test_lambda_handler(apigw_event):
 
-    ret = app.lambda_handler(apigw_event, lambda_context())
+    ret = product.lambda_handler(apigw_event, lambda_context())
     data = json.loads(ret["body"])
 
     assert ret["statusCode"] == 200

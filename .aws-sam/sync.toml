@@ -2,8 +2,13 @@
 
 [sync_state]
 dependency_layer = true
-latest_infra_sync_time = "2023-06-23T11:23:19.182771"
+latest_infra_sync_time = "2023-07-04T17:51:00.719418"
 
+[resource_sync_states]
 [resource_sync_states."AutoDependencyLayerParentSyncFlow:ProductLambdaFunction"]
-hash = "d35e16fa4255493d5f67618ccd3c574a3940e9b7ad35037b824b9f73691e43d1"
-sync_time = "2023-06-23T12:10:36.734029"
+hash = "0291827eac78174f8f1651b7f4cd9b3ee8b00a658482bba23f18757a93fb5128"
+sync_time = "2023-07-04T18:15:24.608929"
+
+[resource_sync_states."AutoDependencyLayerParentSyncFlow:OrderLambdaFunction"]
+hash = "0291827eac78174f8f1651b7f4cd9b3ee8b00a658482bba23f18757a93fb5128"
+sync_time = "2023-07-04T18:15:31.607001"

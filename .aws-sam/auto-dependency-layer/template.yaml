@@ -67,12 +67,11 @@ Resources:
   ProductLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: app.lambda_handler
+      Handler: product.lambda_handler
       CodeUri: ProductLambdaFunction
       Description: Lambda function for all product endpoints
       Architectures:
       - x86_64
-      Tracing: Active
       Events:
         LoadProductPath:
           Type: Api
@@ -115,6 +114,54 @@ Resources:
           - Read
     Metadata:
       SamResourceId: ProductLambdaFunction
+  OrderLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Lambda function with cart and order endpoints
+      CodeUri: OrderLambdaFunction
+      Handler: order.lambda_handler
+      Events:
+        addToCartPath:
+          Type: Api
+          Properties:
+            Path: /cart/{user_id}/checkout
+            Method: POST
+            RestApiId:
+              Ref: EcommerceRESTAPI
+            Auth:
+              ApiKeyRequired: true
+        getCartItemsPath:
+          Type: Api
+          Properties:
+            Path: /cart/{user_id}
+            Method: GET
+            RestApiId:
+              Ref: EcommerceRESTAPI
+            Auth:
+              ApiKeyRequired: true
+        orderPath:
+          Type: Api
+          Properties:
+            Path: /order
+            Method: POST
+            RestApiId:
+              Ref: EcommerceRESTAPI
+            Auth:
+              ApiKeyRequired: true
+      Layers:
+      - Fn::GetAtt:
+        - AwsSamAutoDependencyLayerNestedStack
+        - Outputs.OrderLambdaFunctionf3756e44DepLayer
+    Connectors:
+      addToCartConnection:
+        Properties:
+          Destination:
+            Id: EcommerceAppTable
+          Permissions:
+          - Write
+          - Read
+    Metadata:
+      SamResourceId: OrderLambdaFunction
   ApplicationResourceGroup:
     Type: AWS::ResourceGroups::Group
     Properties:
@@ -134,14 +181,41 @@ Resources:
       AttributeDefinitions:
       - AttributeName: PK
         AttributeType: S
+      - AttributeName: SK
+        AttributeType: S
+      - AttributeName: GSI1PK
+        AttributeType: S
+      - AttributeName: GSI1SK
+        AttributeType: S
+      - AttributeName: GSI2PK
+        AttributeType: S
+      - AttributeName: GSI2SK
+        AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       KeySchema:
       - AttributeName: PK
         KeyType: HASH
-      StreamSpecification:
-        StreamViewType: NEW_IMAGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+      - AttributeName: SK
+        KeyType: RANGE
+      GlobalSecondaryIndexes:
+      - IndexName: userOrders
+        KeySchema:
+        - AttributeName: GSI1PK
+          KeyType: HASH
+        - AttributeName: GSI1SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      - IndexName: orderProducts
+        KeySchema:
+        - AttributeName: GSI2PK
+          KeyType: HASH
+        - AttributeName: GSI2SK
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
   AwsSamAutoDependencyLayerNestedStack:
     DeletionPolicy: Delete
     Metadata:

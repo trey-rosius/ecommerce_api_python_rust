@@ -163,7 +163,7 @@ class Logger:
 
     **Create child Logger using logging inheritance via child param**
 
-        >>> # app.py
+        >>> # product.py
         >>> import another_file
         >>> from aws_lambda_powertools import Logger
         >>> logger = Logger(service="payment")
@@ -174,7 +174,7 @@ class Logger:
 
     **Logging in UTC timezone**
 
-        >>> # app.py
+        >>> # product.py
         >>> import logging
         >>> from aws_lambda_powertools import Logger
         >>>
@@ -182,7 +182,7 @@ class Logger:
 
     **Brings message as the first key in log statements**
 
-        >>> # app.py
+        >>> # product.py
         >>> import logging
         >>> from aws_lambda_powertools import Logger
         >>>
@@ -190,7 +190,7 @@ class Logger:
 
     **Logging to a file instead of standard output for testing**
 
-        >>> # app.py
+        >>> # product.py
         >>> import logging
         >>> from aws_lambda_powertools import Logger
         >>>
