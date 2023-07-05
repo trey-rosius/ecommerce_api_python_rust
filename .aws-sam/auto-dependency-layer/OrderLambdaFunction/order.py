@@ -88,7 +88,7 @@ def get_cart(user_id: str) -> dict:
     try:
         response = table.query(
             KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("PRODUCT#"),
-            ProjectionExpression="productId,quantity,cart_product_status,added_on,user_id",
+            ProjectionExpression="productId,quantity,cartProductStatus,addedOn,userId",
             FilterExpression=Attr("cart_product_status").eq("PENDING")
         )
         return {
@@ -129,8 +129,8 @@ def add_to_cart(user_id: str) -> dict:
         "userId": user_id,
         "productId": product_id,
         "quantity": quantity,
-        "cart_product_status": "PENDING",
-        "added_on": scalar_types_utils.aws_timestamp()
+        "cartProductStatus": "PENDING",
+        "addedOn": scalar_types_utils.aws_timestamp()
 
     }
 

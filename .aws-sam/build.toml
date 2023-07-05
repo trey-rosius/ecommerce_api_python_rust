@@ -7,6 +7,6 @@ architecture = "x86_64"
 handler = "app.lambda_handler"
 manifest_hash = "e41254deb67cd2917b7d646bc14ffe16"
 packagetype = "Zip"
-functions = ["ProductLambdaFunction", "OrderLambdaFunction"]
+functions = ["UpdateCartProductsFunction", "ProcessCartProductsFunction", "ProductLambdaFunction", "OrderLambdaFunction"]
 
 [layer_build_definitions]

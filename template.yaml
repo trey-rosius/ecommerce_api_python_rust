@@ -14,6 +14,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
     Environment:
       Variables:
         TABLE_NAME: !Ref EcommerceAppTable
+        UPDATE_CART_PRODUCT_SQS: !Ref UpdateCartProductsSQS
         POWERTOOLS_SERVICE_NAME: ecommerce-api
         POWERTOOLS_METRICS_NAMESPACE: ecommerce-api-metric
         LOG_LEVEL: DEBUG
@@ -22,6 +23,51 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
 
 
 Resources:
+
+##### ROLES
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: !GetAtt EcommerceAppTable.StreamArn
+
+  EventSourceDDBTableStream:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: True
+      FilterCriteria:
+        Filters:
+          - Pattern: '{ "dynamodb": { "NewImage": { "order_status": { "S": ["ORDERED"] } } } }'
+      EventSourceArn: !GetAtt EcommerceAppTable.StreamArn
+      FunctionName: !GetAtt ProcessCartProductsFunction.Arn
+      StartingPosition: LATEST
 
   RESTAPIAccessLogs:
     Type: AWS::Logs::LogGroup
@@ -65,6 +111,69 @@ Resources:
       StageName: Dev
       Auth:
         ApiKeyRequired: true # sets for all methods
+  ###################
+   #   SQS
+  ###################
+  UpdateCartProductsSQS:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 20
+      RedrivePolicy:
+        deadLetterTargetArn:
+          !GetAtt UpdateCartProductsDLQ.Arn
+        maxReceiveCount: 5
+  UpdateCartProductsDLQ:
+    Type: AWS::SQS::Queue
+  UpdateCartProductsFunction:
+    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: update_cart_products.lambda_handler
+      CodeUri: src
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Description: Lambda function pulls the sqs queue messages and processes the order items
+      Architectures:
+      - x86_64
+      Events:
+        RetrieveFromSQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt UpdateCartProductsSQS.Arn
+            BatchSize: 5
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
+    Connectors:
+      SQSConnectors:
+        Properties:
+          Destination:
+            Id: UpdateCartProductsSQS
+          Permissions:
+            - Read
+
+
+  ProcessCartProductsFunction:
+    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: process_cart_products.lambda_handler
+      CodeUri: src
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Description: Lambda function listens to dynamodb streams, gets order and sends order to sqs
+      Architectures:
+      - x86_64
+    Connectors:
+      SQSConnectors:
+        Properties:
+          Destination:
+            Id: UpdateCartProductsSQS
+          Permissions:
+            - Write
+      updateDDBItemConnection:
+        Properties:
+          Destination:
+            Id: EcommerceAppTable
+          Permissions:
+            - Write
+
+
 
   ProductLambdaFunction:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
@@ -154,19 +263,6 @@ Resources:
             - Read
 
 
-  ApplicationResourceGroup:
-    Type: AWS::ResourceGroups::Group
-    Properties:
-      Name:
-        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
-      ResourceQuery:
-        Type: CLOUDFORMATION_STACK_1_0
-  ApplicationInsightsMonitoring:
-    Type: AWS::ApplicationInsights::Application
-    Properties:
-      ResourceGroupName:
-        Ref: ApplicationResourceGroup
-      AutoConfigurationEnabled: 'true'
 
   EcommerceAppTable:
     Type: AWS::DynamoDB::Table
