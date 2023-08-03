@@ -2,21 +2,21 @@
 
 [sync_state]
 dependency_layer = true
-latest_infra_sync_time = "2023-07-05T11:35:46.220395"
+latest_infra_sync_time = "2023-07-12T12:35:15.582473"
 
 [resource_sync_states]
 [resource_sync_states."AutoDependencyLayerParentSyncFlow:ProductLambdaFunction"]
-hash = "e5ae7f72d2d889a927b8fb6622562714ee4598f93cb90a88cb15ab2c16bd5991"
-sync_time = "2023-07-05T11:29:25.920862"
+hash = "80710fdc5f876ab88f241bef8485fd4eb5cbe6fa1258458ef1c7eec99c61b697"
+sync_time = "2023-07-12T14:25:47.787347"
 
 [resource_sync_states."AutoDependencyLayerParentSyncFlow:OrderLambdaFunction"]
-hash = "e5ae7f72d2d889a927b8fb6622562714ee4598f93cb90a88cb15ab2c16bd5991"
-sync_time = "2023-07-05T11:29:32.904129"
+hash = "80710fdc5f876ab88f241bef8485fd4eb5cbe6fa1258458ef1c7eec99c61b697"
+sync_time = "2023-07-12T14:25:40.294770"
 
 [resource_sync_states."AutoDependencyLayerParentSyncFlow:ProcessCartProductsFunction"]
-hash = "e5ae7f72d2d889a927b8fb6622562714ee4598f93cb90a88cb15ab2c16bd5991"
-sync_time = "2023-07-05T11:29:41.440249"
+hash = "80710fdc5f876ab88f241bef8485fd4eb5cbe6fa1258458ef1c7eec99c61b697"
+sync_time = "2023-07-12T14:25:29.349374"
 
 [resource_sync_states."AutoDependencyLayerParentSyncFlow:UpdateCartProductsFunction"]
-hash = "e5ae7f72d2d889a927b8fb6622562714ee4598f93cb90a88cb15ab2c16bd5991"
-sync_time = "2023-07-05T11:29:18.957857"
+hash = "80710fdc5f876ab88f241bef8485fd4eb5cbe6fa1258458ef1c7eec99c61b697"
+sync_time = "2023-07-12T14:25:36.592696"

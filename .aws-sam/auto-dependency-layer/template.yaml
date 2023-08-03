@@ -93,7 +93,7 @@ Resources:
           Action:
           - sts:AssumeRole
       Policies:
-      - PolicyName: AllowSqsIntegration
+      - PolicyName: AllowCWIntegration
         PolicyDocument:
           Version: '2012-10-17'
           Statement:

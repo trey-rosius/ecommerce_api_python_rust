@@ -12,6 +12,7 @@ from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
+from requests import Response
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -47,7 +48,7 @@ def get_products():
         else:
             response = table.query(
                 KeyConditionExpression=Key("PK").eq(f"PRODUCT") & Key("SK").begins_with(f"PRODUCT#"),
-               )
+            )
 
         last_evaluated_key = response.get("LastEvaluatedKey")
         logger.debug(f"response item is {response['Items']}")
@@ -82,6 +83,7 @@ def get_product(product_id: str):
         return {
             "statusCode": 200,
             "body": item["Item"],
+
         }
     except ClientError as err:
         logger.debug(f"Error while getting product {err.response['Error']}")
