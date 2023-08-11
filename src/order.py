@@ -93,7 +93,7 @@ def get_cart(user_id: str) -> dict:
         )
         return {
             "statusCode": 200,
-            "body": {"cart_items":response["Items"]}
+            "body": {"cart_items": response["Items"]}
         }
     except ClientError as err:
         logger.debug(f" failed to get cart{err.response['Error']}")
