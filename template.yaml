@@ -11,6 +11,8 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
     MemorySize: 128
     Runtime: python3.10
     Tracing: Active
+    Layers:
+      - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:40
     Environment:
       Variables:
         TABLE_NAME: !Ref EcommerceAppTable
@@ -231,7 +233,7 @@ Resources:
       Handler: order.lambda_handler
       Events:
         addToCartPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api  # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /cart/{user_id}/checkout
             Method: POST
