@@ -11,6 +11,8 @@ Globals:
     MemorySize: 128
     Runtime: python3.10
     Tracing: Active
+    Layers:
+    - Fn::Sub: arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:40
     Environment:
       Variables:
         TABLE_NAME:
@@ -23,40 +25,6 @@ Globals:
         POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
         POWERTOOLS_LOGGER_LOG_EVENT: true
 Resources:
-  LambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - lambda.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Path: /
-      Policies:
-      - PolicyName: root
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: arn:aws:logs:*:*:*
-          - Effect: Allow
-            Action:
-            - dynamodb:DescribeStream
-            - dynamodb:GetRecords
-            - dynamodb:GetShardIterator
-            - dynamodb:ListStreams
-            Resource:
-              Fn::GetAtt:
-              - EcommerceAppTable
-              - StreamArn
   EventSourceDDBTableStream:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -75,41 +43,6 @@ Resources:
         - ProcessCartProductsFunction
         - Arn
       StartingPosition: LATEST
-  RESTAPIAccessLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: ecommerce-api-Access-Logs
-      RetentionInDays: 1
-  RESTAPIRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-            - apigateway.amazonaws.com
-          Action:
-          - sts:AssumeRole
-      Policies:
-      - PolicyName: AllowCWIntegration
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-          - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:DescribeLogGroups
-            - logs:DescribeLogStreams
-            - logs:PutLogEvents
-            - logs:GetLogEvents
-            - logs:FilterLogEvents
-            Resource:
-              Fn::GetAtt:
-              - RESTAPIAccessLogs
-              - Arn
   EcommerceRESTAPI:
     Type: AWS::Serverless::Api
     Properties:
@@ -135,10 +68,6 @@ Resources:
     Properties:
       Handler: update_cart_products.lambda_handler
       CodeUri: UpdateCartProductsFunction
-      Role:
-        Fn::GetAtt:
-        - LambdaExecutionRole
-        - Arn
       Description: Lambda function pulls the sqs queue messages and processes the
         order items
       Architectures:
@@ -165,6 +94,12 @@ Resources:
             Id: UpdateCartProductsSQS
           Permissions:
           - Read
+      updateCartItemsConnector:
+        Properties:
+          Destination:
+            Id: EcommerceAppTable
+          Permissions:
+          - Write
     Metadata:
       SamResourceId: UpdateCartProductsFunction
   ProcessCartProductsFunction:
@@ -172,14 +107,22 @@ Resources:
     Properties:
       Handler: process_cart_products.lambda_handler
       CodeUri: ProcessCartProductsFunction
-      Role:
-        Fn::GetAtt:
-        - LambdaExecutionRole
-        - Arn
       Description: Lambda function listens to dynamodb streams, gets order and sends
         order to sqs
       Architectures:
       - x86_64
+      Policies:
+      - DynamoDBStreamReadPolicy:
+          TableName:
+            Ref: EcommerceAppTable
+          StreamName:
+            Fn::Select:
+            - 3
+            - Fn::Split:
+              - /
+              - Fn::GetAtt:
+                - EcommerceAppTable
+                - StreamArn
       Layers:
       - Fn::GetAtt:
         - AwsSamAutoDependencyLayerNestedStack
@@ -189,12 +132,6 @@ Resources:
         Properties:
           Destination:
             Id: UpdateCartProductsSQS
-          Permissions:
-          - Write
-      updateDDBItemConnection:
-        Properties:
-          Destination:
-            Id: EcommerceAppTable
           Permissions:
           - Write
     Metadata:
@@ -259,7 +196,7 @@ Resources:
         addToCartPath:
           Type: Api
           Properties:
-            Path: /cart/{user_id}/checkout
+            Path: /cart/{user_id}
             Method: POST
             RestApiId:
               Ref: EcommerceRESTAPI

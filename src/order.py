@@ -96,7 +96,7 @@ def get_cart(user_id: str) -> dict:
         }
 
 
-@app.post("/cart/{user_id}/checkout")
+@app.post("/cart/{user_id}")
 @tracer.capture_method
 def add_to_cart(user_id: str) -> dict:
     # adding custom metrics

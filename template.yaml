@@ -26,38 +26,6 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
 
 Resources:
 
-##### ROLES
-  LambdaExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: "/"
-      Policies:
-        - PolicyName: root
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource: arn:aws:logs:*:*:*
-              - Effect: Allow
-                Action:
-                  - dynamodb:DescribeStream
-                  - dynamodb:GetRecords
-                  - dynamodb:GetShardIterator
-                  - dynamodb:ListStreams
-                Resource: !GetAtt EcommerceAppTable.StreamArn
 
   EventSourceDDBTableStream:
     Type: AWS::Lambda::EventSourceMapping
@@ -71,39 +39,6 @@ Resources:
       FunctionName: !GetAtt ProcessCartProductsFunction.Arn
       StartingPosition: LATEST
 
-  RESTAPIAccessLogs:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: ecommerce-api-Access-Logs
-      RetentionInDays: 1
-
-  RESTAPIRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-              - apigateway.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Policies:
-      - PolicyName: AllowCWIntegration
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action:
-                - 'logs:CreateLogGroup'
-                - 'logs:CreateLogStream'
-                - 'logs:DescribeLogGroups'
-                - 'logs:DescribeLogStreams'
-                - 'logs:PutLogEvents'
-                - 'logs:GetLogEvents'
-                - 'logs:FilterLogEvents'
-              Resource: !GetAtt RESTAPIAccessLogs.Arn
 
   EcommerceRESTAPI:
     Type: AWS::Serverless::Api
@@ -132,7 +67,6 @@ Resources:
     Properties:
       Handler: update_cart_products.lambda_handler
       CodeUri: src
-      Role: !GetAtt LambdaExecutionRole.Arn
       Description: Lambda function pulls the sqs queue messages and processes the order items
       Architectures:
       - x86_64
@@ -151,6 +85,12 @@ Resources:
             Id: UpdateCartProductsSQS
           Permissions:
             - Read
+      updateCartItemsConnector:
+        Properties:
+          Destination:
+            Id: EcommerceAppTable
+          Permissions:
+            - Write
 
 
   ProcessCartProductsFunction:
@@ -158,10 +98,14 @@ Resources:
     Properties:
       Handler: process_cart_products.lambda_handler
       CodeUri: src
-      Role: !GetAtt LambdaExecutionRole.Arn
       Description: Lambda function listens to dynamodb streams, gets order and sends order to sqs
       Architectures:
       - x86_64
+      Policies:
+        - DynamoDBStreamReadPolicy:
+            TableName: !Ref EcommerceAppTable
+            StreamName: !Select [3, !Split ["/", !GetAtt EcommerceAppTable.StreamArn]]
+
     Connectors:
       SQSConnectors:
         Properties:
@@ -169,13 +113,6 @@ Resources:
             Id: UpdateCartProductsSQS
           Permissions:
             - Write
-      updateDDBItemConnection:
-        Properties:
-          Destination:
-            Id: EcommerceAppTable
-          Permissions:
-            - Write
-
 
 
   ProductLambdaFunction:
@@ -235,7 +172,7 @@ Resources:
         addToCartPath:
           Type: Api  # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
-            Path: /cart/{user_id}/checkout
+            Path: /cart/{user_id}
             Method: POST
             RestApiId: !Ref EcommerceRESTAPI
             Auth:
@@ -318,4 +255,3 @@ Outputs:
   ProductLambdaFunction:
     Description: Product Lambda Function ARN
     Value: !GetAtt ProductLambdaFunction.Arn
-

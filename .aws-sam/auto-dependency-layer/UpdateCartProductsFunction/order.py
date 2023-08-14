@@ -1,7 +1,4 @@
-import decimal
-import json
 import os
-
 import boto3 as boto3
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.utilities.data_classes.appsync import scalar_types_utils
@@ -14,9 +11,11 @@ from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError
 
+
 app = APIGatewayRestResolver()
 tracer = Tracer()
 logger = Logger()
+
 metrics = Metrics(namespace="Ecommerce_api")
 
 table_name = os.environ.get("TABLE_NAME")
@@ -46,7 +45,7 @@ def place_order() -> dict:
     ## when you complete the order, the status is set to COMPLETED
     order_id = scalar_types_utils.make_id()
     user_id = request_payload["user_id"]
-    order_status = 'ORDERED'
+    order_status = "ORDERED"
     order_total = request_payload["order_total"]
     order_items = request_payload["order_items"]
 
@@ -60,22 +59,17 @@ def place_order() -> dict:
         "order_status": order_status,
         "order_date": scalar_types_utils.aws_date(),
         "order_total": order_total,
-        "order_items": order_items
+        "order_items": order_items,
     }
     try:
         table.put_item(Item=item)
-        return {
-            "statusCode": 200,
-            "body": {"message": "order placed successfully"}
-        }
+        return {"statusCode": 200, "body": {"message": "order placed successfully"}}
     except ClientError as err:
         logger.debug(f" failed to place order{err.response['Error']}")
         metrics.add_metric(name="place_order", unit="Count", value=1)
         return {
-
             "statusCode": 500,
-            "body": {"message": f" failed to place order{err.response['Error']}"}
-
+            "body": {"message": f" failed to place order{err.response['Error']}"},
         }
 
 
@@ -87,31 +81,29 @@ def get_cart(user_id: str) -> dict:
     metrics.add_metric(name="GetCartInvocations", unit=MetricUnit.Count, value=1)
     try:
         response = table.query(
-            KeyConditionExpression=Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("PRODUCT#"),
+            KeyConditionExpression=Key("PK").eq(f"USER#{user_id}")
+            & Key("SK").begins_with("PRODUCT#"),
             ProjectionExpression="productId,quantity,cartProductStatus,addedOn,userId",
-            FilterExpression=Attr("cart_product_status").eq("PENDING")
+            FilterExpression=Attr("cart_product_status").eq("PENDING"),
         )
-        return {
-            "statusCode": 200,
-            "body": {"cart_items":response["Items"]}
-        }
+        return {"statusCode": 200, "body": {"cart_items": response["Items"]}}
     except ClientError as err:
         logger.debug(f" failed to get cart{err.response['Error']}")
         metrics.add_metric(name="get_cart_products", unit="Count", value=1)
         return {
-
             "statusCode": 500,
-            "body": {"message": f" failed to get cart{err.response['Error']}"}
-
+            "body": {"message": f" failed to get cart{err.response['Error']}"},
         }
 
 
-@app.post("/cart/{user_id}/checkout")
+@app.post("/cart/{user_id}")
 @tracer.capture_method
 def add_to_cart(user_id: str) -> dict:
     # adding custom metrics
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
-    metrics.add_metric(name="AddProductsToCartInvocations", unit=MetricUnit.Count, value=1)
+    metrics.add_metric(
+        name="AddProductsToCartInvocations", unit=MetricUnit.Count, value=1
+    )
     if not app.current_event.json_body:
         return {
             "statusCode": 400,
@@ -121,7 +113,7 @@ def add_to_cart(user_id: str) -> dict:
     logger.info(f"request payload is {request_payload}")
 
     product_id = request_payload["product_id"]
-    quantity = request_payload['quantity']
+    quantity = request_payload["quantity"]
 
     item = {
         "PK": f"USER#{user_id}",
@@ -130,26 +122,21 @@ def add_to_cart(user_id: str) -> dict:
         "productId": product_id,
         "quantity": quantity,
         "cartProductStatus": "PENDING",
-        "addedOn": scalar_types_utils.aws_timestamp()
-
+        "addedOn": scalar_types_utils.aws_timestamp(),
     }
 
     try:
         table.put_item(Item=item)
         return {
             "statusCode": 200,
-            "body":
-                {"productId": product_id, "message": "product added to cart"}
-
+            "body": {"productId": product_id, "message": "product added to cart"},
         }
     except ClientError as err:
         logger.debug(f" failed to add item to cart{err.response['Error']}")
         metrics.add_metric(name="product_add_to_cart", unit="Count", value=1)
         return {
-
             "statusCode": 500,
-            "body": {"message": f" failed to add item to cart{err.response['Error']}"}
-
+            "body": {"message": f" failed to add item to cart{err.response['Error']}"},
         }
 
 

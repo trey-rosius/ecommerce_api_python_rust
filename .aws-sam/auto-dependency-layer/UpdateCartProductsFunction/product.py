@@ -1,4 +1,3 @@
-import decimal
 import json
 import os
 
@@ -10,9 +9,8 @@ from aws_lambda_powertools import Logger
 from aws_lambda_powertools import Tracer
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
-from boto3.dynamodb.conditions import Attr, Key
+from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
-from requests import Response
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -41,18 +39,19 @@ def get_products():
     while True:
         if last_evaluated_key:
             response = table.query(
-                KeyConditionExpression=Key("PK").eq(f"PRODUCT") & Key("SK").begins_with(f"PRODUCT#"),
-                ExclusiveStartKey=last_evaluated_key
-
+                KeyConditionExpression=Key("PK").eq(f"PRODUCT")
+                & Key("SK").begins_with(f"PRODUCT#"),
+                ExclusiveStartKey=last_evaluated_key,
             )
         else:
             response = table.query(
-                KeyConditionExpression=Key("PK").eq(f"PRODUCT") & Key("SK").begins_with(f"PRODUCT#"),
+                KeyConditionExpression=Key("PK").eq(f"PRODUCT")
+                & Key("SK").begins_with(f"PRODUCT#"),
             )
 
         last_evaluated_key = response.get("LastEvaluatedKey")
         logger.debug(f"response item is {response['Items']}")
-        response = list(response['Items'])
+        response = list(response["Items"])
         results.extend(response)
 
         if not last_evaluated_key:
@@ -72,18 +71,11 @@ def get_product(product_id: str):
 
     try:
 
-        item = table.get_item(
-            Key={
-                "PK": f"PRODUCT",
-                "SK": f"PRODUCT#{product_id}"
-
-            }
-        )
+        item = table.get_item(Key={"PK": f"PRODUCT", "SK": f"PRODUCT#{product_id}"})
 
         return {
             "statusCode": 200,
             "body": item["Item"],
-
         }
     except ClientError as err:
         logger.debug(f"Error while getting product {err.response['Error']}")
@@ -105,7 +97,7 @@ def load_products():
                 Item={
                     "PK": f"PRODUCT",
                     "SK": f"PRODUCT#{item['productId']}",
-                    "productId": item['productId'],
+                    "productId": item["productId"],
                     "category": item["category"],
                     "createdDate": item["createdDate"],
                     "description": item["description"],
@@ -114,10 +106,8 @@ def load_products():
                     "package": item["package"],
                     "pictures": item["pictures"],
                     "price": item["price"],
-                    "tags": item["tags"]
-
+                    "tags": item["tags"],
                 }
-
             )
 
     return {
