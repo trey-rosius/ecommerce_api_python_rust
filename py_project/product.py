@@ -12,6 +12,8 @@ from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
+import ecommerce_api;
+
 
 
 app = APIGatewayRestResolver()
@@ -22,7 +24,7 @@ metrics = Metrics(namespace="Ecommerce_api")
 table_name = os.environ.get("TABLE_NAME")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(table_name)
-
+ddb_client = ecommerce_api.DDBClient()
 with open("./product_list.json", "r") as product_list:
     product_list = json.load(product_list)
 
@@ -71,6 +73,12 @@ def get_products():
 def get_product(product_id: str):
     metrics.add_metric(name="GetProductInvocations", unit=MetricUnit.Count, value=1)
     logger.debug(f"product id {product_id}")
+    ddb_client.get_product(table_name,product_id)
+
+
+    '''
+    
+    
 
     try:
 
@@ -84,7 +92,7 @@ def get_product(product_id: str):
         logger.debug(f"Error while getting product {err.response['Error']}")
         raise err
 
-
+  '''
 @app.post("/loadProducts")
 @tracer.capture_method
 def load_products():

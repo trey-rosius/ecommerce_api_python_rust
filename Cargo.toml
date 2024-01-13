@@ -17,3 +17,7 @@ tokio = { version = "1.21.1", features = ["full"] }
 aws_lambda_events = { version = "0.8.3", default-features = false, features = ["dynamodb","sqs"]}
 serde = "1.0.136"
 serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.2", features = ["fmt", "json"] }
+lambda_runtime = { version = "0.8.3"}
+serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+1"] }
