@@ -1,0 +1,19 @@
+[package]
+name = "ecommerce_api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "ecommerce_api"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "0.19.0"
+aws-config = "1.1.1"
+aws-sdk-dynamodb = "1.9.0"
+aws-sdk-sqs = "1.9.0"
+tokio = { version = "1.21.1", features = ["full"] }
+aws_lambda_events = { version = "0.8.3", default-features = false, features = ["dynamodb","sqs"]}
+serde = "1.0.136"
+serde_json = "1"

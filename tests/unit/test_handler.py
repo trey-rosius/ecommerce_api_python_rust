@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from src import product
+from py_project import product
 
 def lambda_context():
     class LambdaContext:

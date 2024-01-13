@@ -12,6 +12,8 @@ from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
 
+
+
 app = APIGatewayRestResolver()
 tracer = Tracer()
 logger = Logger()
@@ -23,6 +25,7 @@ table = dynamodb.Table(table_name)
 
 with open("./product_list.json", "r") as product_list:
     product_list = json.load(product_list)
+
 
 
 @app.get("/products")

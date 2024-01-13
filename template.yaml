@@ -66,7 +66,7 @@ Resources:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: update_cart_products.lambda_handler
-      CodeUri: src
+      CodeUri: py_project
       Description: Lambda function pulls the sqs queue messages and processes the order items
       Architectures:
       - x86_64
@@ -97,7 +97,7 @@ Resources:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: process_cart_products.lambda_handler
-      CodeUri: src
+      CodeUri: py_project
       Description: Lambda function listens to dynamodb streams, gets order and sends order to sqs
       Architectures:
       - x86_64
@@ -119,7 +119,7 @@ Resources:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: product.lambda_handler
-      CodeUri: src
+      CodeUri: py_project
       Description: Lambda function for all product endpoints
       Architectures:
       - x86_64
@@ -166,7 +166,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Description: 'Lambda function with cart and order endpoints'
-      CodeUri: src/
+      CodeUri: py_project/
       Handler: order.lambda_handler
       Events:
         addToCartPath:
