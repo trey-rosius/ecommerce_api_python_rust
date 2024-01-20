@@ -1,6 +1,8 @@
 BASE := $(shell /bin/pwd)
 CODE_COVERAGE = 72
 PIPENV ?= pipenv
+ARCH := aarch64-unknown-linux-gnu
+STACK_NAME ?= ecommerce-api-rust
 
 #############
 #  SAM vars	#
@@ -10,6 +12,20 @@ PIPENV ?= pipenv
 # Helpful when you're running Amazon DynamoDB local etc.
 NETWORK = ""
 
+setup:
+ifeq (,$(shell which rustc))
+	$(error "Could not find Rust compiler, please install it")
+endif
+ifeq (,$(shell which cargo))
+	$(error "Could not find Cargo, please install it")
+endif
+ifeq (,$(shell which zig))
+	$(error "Could not find Zig compiler, please install it")
+endif
+	cargo install cargo-lambda
+ifeq (,$(shell which sam))
+	$(error "Could not find SAM CLI, please install it")
+endif
 target:
 	$(info ${HELP_MESSAGE})
 	@exit 0
@@ -34,17 +50,13 @@ shell:
 	@$(PIPENV) shell
 
 build: ##=> Same as package except that we don't create a ZIP
-	sam build --use-container
-
-deploy.guided: ##=> Guided deploy that is typically run for the first time only
-	sam deploy --guided
-
-deploy: ##=> Deploy app using previously saved SAM CLI configuration
-	sam deploy
-
-invoke: ##=> Run SAM Local function with a given event payload
-	@sam local invoke HelloWorldFunction --event events/hello.json
-
+##=> sam build --use-container
+	cargo lambda build --release --target $(ARCH)
+deploy:
+	if [ -f samconfig.toml ]; \
+		then sam deploy --stack-name $(STACK_NAME); \
+		else sam deploy -g --stack-name $(STACK_NAME); \
+	fi
 run: ##=> Run SAM Local API GW and can optionally run new containers connected to a defined network
 	@test -z ${NETWORK} \
 		&& sam local start-api \

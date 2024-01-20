@@ -5,9 +5,7 @@ import boto3 as boto3
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.logging import correlation_paths
-from aws_lambda_powertools import Logger
-from aws_lambda_powertools import Tracer
-from aws_lambda_powertools import Metrics
+from aws_lambda_powertools import Logger, Tracer, Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Key
 from botocore.exceptions import ClientError
@@ -21,7 +19,7 @@ table_name = os.environ.get("TABLE_NAME")
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(table_name)
 
-with open("./product_list.json", "r") as product_list:
+with open("product_list.json", "r") as product_list:
     product_list = json.load(product_list)
 
 
@@ -40,13 +38,13 @@ def get_products():
         if last_evaluated_key:
             response = table.query(
                 KeyConditionExpression=Key("PK").eq(f"PRODUCT")
-                & Key("SK").begins_with(f"PRODUCT#"),
+                                       & Key("SK").begins_with(f"PRODUCT#"),
                 ExclusiveStartKey=last_evaluated_key,
             )
         else:
             response = table.query(
                 KeyConditionExpression=Key("PK").eq(f"PRODUCT")
-                & Key("SK").begins_with(f"PRODUCT#"),
+                                       & Key("SK").begins_with(f"PRODUCT#"),
             )
 
         last_evaluated_key = response.get("LastEvaluatedKey")

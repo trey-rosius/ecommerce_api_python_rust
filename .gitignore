@@ -292,7 +292,7 @@ $RECYCLE.BIN/
 # Misc
 test_report
 wheelhouse
-/.idea/*
+/.idea/aws.xml
 *.html
 TMP_CHANGELOG.md
 
@@ -316,3 +316,8 @@ examples/**/sam/.aws-sam
 cdk.out
 # NOTE: different accounts will be used for E2E thus creating unnecessary git clutter
 cdk.context.json
+
+
+# Added by cargo
+
+/target

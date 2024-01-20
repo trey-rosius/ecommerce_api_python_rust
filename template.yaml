@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   ecommerce-api
@@ -9,10 +9,10 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
   Function:
     Timeout: 5
     MemorySize: 128
-    Runtime: python3.10
     Tracing: Active
+
     Layers:
-      - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:40
+      - !Sub arn:aws:lambda:${AWS::Region}:017000801446:layer:AWSLambdaPowertoolsPythonV2:60
     Environment:
       Variables:
         TABLE_NAME: !Ref EcommerceAppTable
@@ -23,10 +23,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
         POWERTOOLS_LOGGER_SAMPLE_RATE: 0.1
         POWERTOOLS_LOGGER_LOG_EVENT: true
 
-
 Resources:
-
-
   EventSourceDDBTableStream:
     Type: AWS::Lambda::EventSourceMapping
     Properties:
@@ -39,7 +36,6 @@ Resources:
       FunctionName: !GetAtt ProcessCartProductsFunction.Arn
       StartingPosition: LATEST
 
-
   EcommerceRESTAPI:
     Type: AWS::Serverless::Api
     Properties:
@@ -50,26 +46,26 @@ Resources:
         ApiKeyRequired: true # sets for all methods
 
   ###################
-   #   SQS
+  #   SQS
   ###################
   UpdateCartProductsSQS:
     Type: AWS::SQS::Queue
     Properties:
       VisibilityTimeout: 20
       RedrivePolicy:
-        deadLetterTargetArn:
-          !GetAtt UpdateCartProductsDLQ.Arn
+        deadLetterTargetArn: !GetAtt UpdateCartProductsDLQ.Arn
         maxReceiveCount: 5
   UpdateCartProductsDLQ:
     Type: AWS::SQS::Queue
   UpdateCartProductsFunction:
-    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: update_cart_products.lambda_handler
-      CodeUri: py_project
+      Runtime: python3.11
+      CodeUri: src/
       Description: Lambda function pulls the sqs queue messages and processes the order items
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         RetrieveFromSQS:
           Type: SQS
@@ -92,19 +88,22 @@ Resources:
           Permissions:
             - Write
 
-
   ProcessCartProductsFunction:
-    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Metadata:
+      BuildMethod: makefile
     Properties:
-      Handler: process_cart_products.lambda_handler
-      CodeUri: py_project
+      CodeUri: target/lambda/process-cart-products/
+      Handler: bootstrap
+      Runtime: provided.al2
       Description: Lambda function listens to dynamodb streams, gets order and sends order to sqs
       Architectures:
-      - x86_64
+        - arm64
       Policies:
         - DynamoDBStreamReadPolicy:
             TableName: !Ref EcommerceAppTable
-            StreamName: !Select [3, !Split ["/", !GetAtt EcommerceAppTable.StreamArn]]
+            StreamName:
+              !Select [3, !Split ["/", !GetAtt EcommerceAppTable.StreamArn]]
 
     Connectors:
       SQSConnectors:
@@ -114,43 +113,43 @@ Resources:
           Permissions:
             - Write
 
-
   ProductLambdaFunction:
-    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: product.lambda_handler
-      CodeUri: py_project
+      Runtime: python3.11
+      CodeUri: src/
       Description: Lambda function for all product endpoints
       Architectures:
-      - x86_64
+        - x86_64
       Events:
         LoadProductPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /loadProducts
             Method: POST
             RestApiId: !Ref EcommerceRESTAPI
             Auth:
               ApiKeyRequired: true
-             # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+              # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
         GetProductPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /products/{product_id}
             Method: GET
             RestApiId: !Ref EcommerceRESTAPI
             Auth:
               ApiKeyRequired: true
-             # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+              # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
         GetProductsPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /products
             Method: GET
             RestApiId: !Ref EcommerceRESTAPI
             Auth:
               ApiKeyRequired: true
-             # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+              # Powertools for AWS Lambda (Python) env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
 
     Connectors:
       productConnectors:
@@ -161,16 +160,16 @@ Resources:
             - Write
             - Read
 
-
   OrderLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Description: 'Lambda function with cart and order endpoints'
-      CodeUri: py_project/
+      Description: "Lambda function with cart and order endpoints"
+      CodeUri: src/
+      Runtime: python3.11
       Handler: order.lambda_handler
       Events:
         addToCartPath:
-          Type: Api  # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /cart/{user_id}
             Method: POST
@@ -178,7 +177,7 @@ Resources:
             Auth:
               ApiKeyRequired: true
         getCartItemsPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /cart/{user_id}
             Method: GET
@@ -186,7 +185,7 @@ Resources:
             Auth:
               ApiKeyRequired: true
         orderPath:
-          Type: Api           # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
           Properties:
             Path: /order
             Method: POST
@@ -201,8 +200,6 @@ Resources:
           Permissions:
             - Write
             - Read
-
-
 
   EcommerceAppTable:
     Type: AWS::DynamoDB::Table
@@ -245,7 +242,6 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-
 
 Outputs:
   EcommerceRestApi:
