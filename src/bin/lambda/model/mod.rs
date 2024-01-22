@@ -1,98 +1,124 @@
 use serde::{Deserialize,Serialize};
-
+ 
 #[derive(Debug, Serialize, Deserialize)]
+
 pub struct Order {
     pub order_status: OrderStatus,
     pub user_id: UserId,
     pub order_id: OrderId,
     pub order_items: OrderItem,
     pub order_total: OrderTotal,
-    pub  SK: SK,
-    pub order_date: OrderDate,
-    pub GSI1SK: GSI1SK,
-    pub GSI1PK: GSI1PK,
-    pub PK: PK,
+    #[serde(rename = "SK")]
+     sk: SK,
+     order_date: OrderDate,
+    #[serde(rename= "GSI1SK")]
+     gsi1sk: GSI1SK,
+    #[serde(rename = "GSI1PK")]
+    gsi1pk: GSI1PK,
+    #[serde(rename = "PK")]
+    pk: PK,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct OrderStatus {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct UserId {
-   pub S: String,
+   pub s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct OrderId {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct OrderItem {
-   pub  L: Vec<OrderItemDetail>,
+   pub  l: Vec<OrderItemDetail>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct OrderItemDetail {
-    pub M:OrderItemDetailsMap
+    pub m:OrderItemDetailsMap
 }
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OrderItemDetailsMap{
-    pub productId: ProductId,
-     pub userId: UserId,
-     pub addedOn: AddedOn,
-     pub quantity: Quantity,
-     pub cartProductStatus: CartProductStatus,
+  
+    pub product_id: ProductId,
+ 
+     pub user_id: UserId,
+
+     pub added_on: AddedOn,
+
+    quantity: Quantity,
+
+     pub cart_product_status: CartProductStatus,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
  pub struct ProductId {
-   pub S: String,
+   pub s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct AddedOn {
-   pub S: String,
+   pub s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 struct Quantity {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct CartProductStatus {
-   pub S: String,
+   pub s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 pub struct OrderTotal {
-    N: String,
+    n: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 struct SK {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 struct OrderDate {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 struct GSI1SK {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 struct GSI1PK {
-    S: String,
+    s: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
 struct PK {
-    S: String,
+    s: String,
 }

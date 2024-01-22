@@ -60,10 +60,10 @@ async fn function_handler(
      info!("Data retrieved from sqs {:?}",record_data);
    
      
-     for item in record_data.order_items.L{
+     for item in record_data.order_items.l{
 
-         let product_id = &item.M.productId.S;
-        let user_id = &item.M.userId.S;
+         let product_id = &item.m.product_id.s;
+        let user_id = &item.m.user_id.s;
 let key_map: HashMap<String, AttributeValue> = [
    
 
