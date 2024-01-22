@@ -74,8 +74,8 @@ let key_map: HashMap<String, AttributeValue> = [
         .update_item()
         .table_name(table_name)
          .set_key(Some(key_map))
-         .condition_expression("attribute_exists(PK)")
-        .update_expression("SET cart_product_status = :cartProductStatus, ")
+        .condition_expression("attribute_exists(PK)")
+        .update_expression("SET cartProductStatus = :cartProductStatus")
         .expression_attribute_values(":cartProductStatus",AttributeValue::S("ORDERED".into()) )
         .return_values(ReturnValue::UpdatedNew)
        
