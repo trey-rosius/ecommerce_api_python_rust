@@ -1,5 +1,5 @@
 
-
+pub mod model;
 
 use std::{env, collections::HashMap};
 
@@ -7,8 +7,13 @@ use aws_lambda_events::event::sqs::SqsEventObj;
 use aws_sdk_dynamodb::{Client, types::{AttributeValue, ReturnValue}};
 use aws_config::{BehaviorVersion,load_defaults};
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
-use ecommerce_api::model::Order;
 use tracing::{info,error};
+
+use crate::model::Order;
+
+
+
+
 
 
 /// Main function
