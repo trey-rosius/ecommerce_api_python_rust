@@ -60,12 +60,12 @@ Resources:
   UpdateCartProductsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
-      Handler: update_cart_products.lambda_handler
-      Runtime: python3.11
-      CodeUri: src/
-      Description: Lambda function pulls the sqs queue messages and processes the order items
+      CodeUri: target/lambda/update-cart-status/
+      Handler: bootstrap
+      Runtime: provided.al2
       Architectures:
-        - x86_64
+        - arm64
+      Description: Lambda function pulls the sqs queue messages and processes the order items
       Events:
         RetrieveFromSQS:
           Type: SQS

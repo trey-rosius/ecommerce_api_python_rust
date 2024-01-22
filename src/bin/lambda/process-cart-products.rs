@@ -9,7 +9,7 @@ use lambda_runtime::{LambdaEvent,service_fn, Error};
 use aws_config::{BehaviorVersion,load_defaults};
 use aws_sdk_sqs::{Client as SqsClient, types::SendMessageBatchRequestEntry};
 use tracing::info;
-
+use ecommerce_api::model:: Order;
 
 
 type E = Box<dyn std::error::Error + Sync + Send + 'static>;
@@ -46,10 +46,11 @@ async fn process_dynamodb_streams(
 
     let events:Vec<String> = event.payload.records
     .par_iter().map(|record| {
-        
-    
-         let new_image =
+      
+  let new_image =
                         serde_json::to_string(&record.clone().change.new_image).unwrap();
+
+       
                   
                         info!("new image record {:?}",&record.clone().change.new_image);
                         info!("new image String is {}",new_image);
@@ -59,7 +60,9 @@ async fn process_dynamodb_streams(
                         new_image
     }).collect();
     info!("all images String is {:?}",events);
-    for item in events{
+    for item in events{ 
+          let order: Order = serde_json::from_str(&item).unwrap();
+          info!("structured order is {:?}",order);
          sqs_client.send_message()
                         .queue_url(sqs_queue_url)
                         .message_body(item)

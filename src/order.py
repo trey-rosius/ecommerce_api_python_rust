@@ -82,7 +82,7 @@ def get_cart(user_id: str) -> dict:
             KeyConditionExpression=Key("PK").eq(f"USER#{user_id}")
             & Key("SK").begins_with("PRODUCT#"),
             ProjectionExpression="productId,quantity,cartProductStatus,addedOn,userId",
-            FilterExpression=Attr("cart_product_status").eq("PENDING"),
+            FilterExpression=Attr("cartProductStatus").eq("PENDING"),
         )
         return {"statusCode": 200, "body": {"cart_items": response["Items"]}}
     except ClientError as err:
@@ -94,7 +94,7 @@ def get_cart(user_id: str) -> dict:
         }
 
 
-@app.post("/cart/{user_id}")
+@app.post("/cart/<user_id>")
 @tracer.capture_method
 def add_to_cart(user_id: str) -> dict:
     # adding custom metrics
