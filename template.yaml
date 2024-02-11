@@ -59,8 +59,12 @@ Resources:
     Type: AWS::SQS::Queue
   UpdateCartProductsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: update-cart-status
     Properties:
-      CodeUri: target/lambda/update-cart-status/
+      CodeUri: ./
       Handler: bootstrap
       Runtime: provided.al2
       Architectures:
@@ -91,9 +95,11 @@ Resources:
   ProcessCartProductsFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Metadata:
-      BuildMethod: makefile
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: process-cart-products
     Properties:
-      CodeUri: target/lambda/process-cart-products/
+      CodeUri: ./
       Handler: bootstrap
       Runtime: provided.al2
       Description: Lambda function listens to dynamodb streams, gets order and sends order to sqs

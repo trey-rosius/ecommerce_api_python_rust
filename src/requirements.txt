@@ -1,2 +1,4 @@
-aws-lambda-powertools[all]
+aws-lambda-powertools[tracer]
+aws-lambda-powertools[logger]
+aws-lambda-powertools[metrics]
 boto3
