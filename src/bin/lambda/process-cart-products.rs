@@ -20,10 +20,9 @@ async fn main() -> Result<(), Error> {
         .init();
     let sqs_client = SqsClient::new(&config);
     let queue_name = env::var("UPDATE_CART_PRODUCT_SQS").expect("Couldn't get the queue url");
-    let sqs_client_ref = &sqs_client;
-    let queue_name_ref = &queue_name;
+
     lambda_runtime::run(service_fn(|request: LambdaEvent<Event>| {
-        process_dynamodb_streams(request, sqs_client_ref, queue_name_ref)
+        process_dynamodb_streams(request, &sqs_client, &queue_name)
     }))
     .await?;
 

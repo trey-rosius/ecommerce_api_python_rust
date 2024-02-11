@@ -29,13 +29,14 @@ async fn main() -> Result<(), Error> {
 
     let table_name = env::var("TABLE_NAME").expect("TABLE_NAME must be set");
     let dynamodb_client = Client::new(&config);
-    let table_name_ref = &table_name;
-    let dynamodb_client_ref = &dynamodb_client;
 
-    let func =
-        service_fn(move |event| function_handler(event, table_name_ref, dynamodb_client_ref));
+    lambda_runtime::run(service_fn(
+        |request: LambdaEvent<SqsEventObj<serde_json::Value>>| {
+            function_handler(request, &table_name, &dynamodb_client)
+        },
+    ))
+    .await?;
 
-    run(func).await?;
     Ok(())
 }
 
