@@ -3,6 +3,7 @@ pub mod model;
 use std::{collections::HashMap, env};
 
 use aws_config::{load_defaults, BehaviorVersion};
+use aws_lambda_events::dynamodb::EventRecord;
 use aws_lambda_events::event::sqs::SqsEventObj;
 use aws_sdk_dynamodb::{
     types::{AttributeValue, ReturnValue},
@@ -31,7 +32,7 @@ async fn main() -> Result<(), Error> {
     let dynamodb_client = Client::new(&config);
 
     lambda_runtime::run(service_fn(
-        |request: LambdaEvent<SqsEventObj<serde_json::Value>>| {
+        |request: LambdaEvent<SqsEventObj<EventRecord>>| {
             function_handler(request, &table_name, &dynamodb_client)
         },
     ))
@@ -41,15 +42,17 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn function_handler(
-    event: LambdaEvent<SqsEventObj<serde_json::Value>>,
+    event: LambdaEvent<SqsEventObj<EventRecord>>,
     table_name: &String,
     client: &Client,
 ) -> Result<(), Error> {
-    info!("sqs payload {:?}", &event.payload);
-    info!("sqs payload records {:?}", &event.payload.records[0]);
+    info!("sqs payload {:?}", event.payload);
+    info!("sqs payload records {:?}", event.payload.records[0]);
 
-    for data_more in &event.payload.records {
-        let record_data: Order = serde_json::from_value(data_more.body.clone()).unwrap();
+    for event_record in event.payload.records {
+        let new_image = event_record.body.change.new_image.into_inner();
+
+        let record_data: Order = serde_dynamo::from_item(new_image).unwrap();
         info!("Data retrieved from sqs {:?}", record_data);
 
         for item in record_data.order_items.l {

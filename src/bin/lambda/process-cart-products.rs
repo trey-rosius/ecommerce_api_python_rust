@@ -35,24 +35,13 @@ async fn process_dynamodb_streams(
     sqs_client: &SqsClient,
     sqs_queue_url: &String,
 ) -> Result<(), E> {
-    let events: Vec<String> = event
-        .payload
-        .records
-        .par_iter()
-        .map(|record| {
-            let new_image = serde_json::to_string(&record.clone().change.new_image).unwrap();
-
-            info!("new image record {:?}", &record.clone().change.new_image);
-
-            new_image
-        })
-        .collect();
-    info!("all images String is {:?}", events);
-    for item in events {
+    info!("(BatchSize)={:?}", event.payload.records.len());
+    for record in &event.payload.records {
+        let new_image = serde_json::to_string(&record.change.new_image).unwrap();
         sqs_client
             .send_message()
             .queue_url(sqs_queue_url)
-            .message_body(item)
+            .message_body(new_image)
             .send()
             .await?;
     }

@@ -868,6 +868,7 @@ dependencies = [
  "lambda_runtime",
  "rayon",
  "serde",
+ "serde_dynamo",
  "serde_json",
  "tokio",
  "tracing",
