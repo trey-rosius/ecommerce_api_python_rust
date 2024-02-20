@@ -8,7 +8,6 @@ use lambda_runtime::{service_fn, Error, LambdaEvent};
 use rayon::prelude::*;
 use tracing::info;
 
-type E = Box<dyn std::error::Error + Sync + Send + 'static>;
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     // Initialize the AWS SDK for Rust
@@ -34,7 +33,7 @@ async fn process_dynamodb_streams(
     event: LambdaEvent<Event>,
     sqs_client: &SqsClient,
     sqs_queue_url: &String,
-) -> Result<(), E> {
+) -> Result<(), Error> {
     info!("(BatchSize)={:?}", event.payload.records.len());
     for record in &event.payload.records {
         let new_image = serde_json::to_string(&record.change.new_image).unwrap();
