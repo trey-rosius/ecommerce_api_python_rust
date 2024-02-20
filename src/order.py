@@ -4,7 +4,7 @@ from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.utilities.data_classes.appsync import scalar_types_utils
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.logging import correlation_paths
-from aws_lambda_powertools import Logger,Tracer,Metrics
+from aws_lambda_powertools import Logger, Tracer, Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Attr, Key
 from botocore.exceptions import ClientError

@@ -38,13 +38,13 @@ def get_products():
         if last_evaluated_key:
             response = table.query(
                 KeyConditionExpression=Key("PK").eq(f"PRODUCT")
-                                       & Key("SK").begins_with(f"PRODUCT#"),
+                & Key("SK").begins_with(f"PRODUCT#"),
                 ExclusiveStartKey=last_evaluated_key,
             )
         else:
             response = table.query(
                 KeyConditionExpression=Key("PK").eq(f"PRODUCT")
-                                       & Key("SK").begins_with(f"PRODUCT#"),
+                & Key("SK").begins_with(f"PRODUCT#"),
             )
 
         last_evaluated_key = response.get("LastEvaluatedKey")
@@ -68,7 +68,6 @@ def get_product(product_id: str):
     logger.debug(f"product id {product_id}")
 
     try:
-
         item = table.get_item(Key={"PK": f"PRODUCT", "SK": f"PRODUCT#{product_id}"})
 
         return {
