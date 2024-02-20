@@ -162,7 +162,7 @@ So the folder structure now looks like so
 
 ```
 
-Open up the Cargo.yaml file and let's add the path and name to the Rust binary executable.
+Open up the Cargo.yaml file and add the `path` and `name` to the Rust binary executable.
 
 
 ```toml
@@ -174,3 +174,70 @@ test= false
 ```
 Remember that the name `process-cart-products` was the same name we specified in the `template.yaml` file for `binary`.
 A rust project can have multiple binaries.
+
+We'll focus mainly on the juicy parts of the lambda function.
+
+This function listens to records from the dynamodb stream event payload(`LambdaEvent<Event>`), loops through the records and sends SQS messages
+to an SQS queue.
+
+We use the `serde_json` crate to convert the dynamodb item into a string, suitable for adding to the
+message body of the sqs message.
+
+```rust
+async fn process_dynamodb_streams(
+    event: LambdaEvent<Event>,
+    sqs_client: &SqsClient,
+    sqs_queue_url: &String,
+) -> Result<(), Error> {
+
+    info!("(BatchSize)={:?}", event.payload.records.len());
+
+    for record in &event.payload.records {
+        let new_image = serde_json::to_string(&record.change.new_image).unwrap();
+        sqs_client
+            .send_message()
+            .queue_url(sqs_queue_url)
+            .message_body(new_image)
+            .send()
+            .await?;
+    }
+
+    Ok(())
+}
+```
+
+## Creating the update cart status function
+This function processes messages from the SQS queue and makes updates to the dynamodb table.
+
+Create a file named `update-cart-status.rs` inside of `src/bin/lambda`.
+
+Inside `Cargo.yaml` add the path and name to the binary executable.
+```toml
+
+[[bin]]
+name = "update-cart-status"
+path ="src/bin/lambda/update-cart-status.rs"
+test = false
+```
+
+Receive SQS Events and loop through them .
+```rust
+async fn function_handler(
+    event: LambdaEvent<SqsEventObj<EventRecord>>,
+    table_name: &String,
+    client: &Client,
+) -> Result<(), Error> {
+    info!("sqs payload {:?}", event.payload);
+    info!("sqs payload records {:?}", event.payload.records[0]);
+
+    for event_record in event.payload.records {
+```
+
+Using the `serde_dynamodb` crate, map the item from SQS to your custom Struct. In our case, we created a struct
+called `Order` which represents the Order Item.
+
+```rust
+      let new_image = event_record.body.change.new_image.into_inner();
+
+        let record_data: Order = serde_dynamo::from_item(new_image).unwrap();
+```
