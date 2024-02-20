@@ -2,3 +2,5 @@ aws-lambda-powertools[tracer]
 aws-lambda-powertools[logger]
 aws-lambda-powertools[metrics]
 boto3
+pre-commit
+ruff
