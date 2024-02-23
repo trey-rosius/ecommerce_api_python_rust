@@ -82,8 +82,6 @@ def get_product(product_id: str):
 @app.post("/loadProducts")
 @tracer.capture_method
 def load_products():
-    # adding custom metrics
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
     metrics.add_metric(name="LoadProductsInvocations", unit=MetricUnit.Count, value=1)
 
     logger.debug("Retrieving all products: %s", product_list)
