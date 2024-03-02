@@ -15,6 +15,8 @@ async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt()
         .json()
         .with_max_level(tracing::Level::INFO)
+        .with_current_span(false)
+        .without_time()
         .with_target(false)
         .init();
     let sqs_client = SqsClient::new(&config);

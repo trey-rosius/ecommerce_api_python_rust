@@ -367,3 +367,17 @@ Messages in SQS are received in batches of 5. So we loop over them and update ea
                 .send()
                 .await;
 ```
+
+For the complete lambda functions, clone the project from [github](https://github.com/trey-rosius/ecommerce_api_python_rust/tree/master)
+
+
+
+## Conclusion
+I've been playing around with Rust, since the official AWS Lambda Rust runtime went GA. It's a very delightful programming
+language to work with. I encourage you to take a deep dive into the language and draw up your own conclusions. Hopefully, our thoughts align.
+
+There's a lot more Rust content coming up, stay tuned.
+
+As always, share the article if you find it useful, leave a like or comment.
+
+We building hands-on Serverless Workshops at https://educloud.academy
