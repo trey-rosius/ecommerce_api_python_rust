@@ -5,6 +5,10 @@
 In a previous workshop, [Building event driven applications with AWS sam and python](https://www.educloud.academy/content/eb8782d3-4281-484e-9f4b-720857db74c0/)
 we built an ecommerce ordering service using AWS SAM, API Gateway, Lambda and Python.
 
+Here's the solutions architecture.
+
+![alt text](https://raw.githubusercontent.com/trey-rosius/ecommerce_api_python_rust/master/assets/solutions_arch.png)
+
 In that workshop, whenever a new order is added to the dynamodb table, a lambda function gets triggered. This function grabs the order and pushed it as a message into an SQS Queue for processing.
 Another lambda function polls that SQS queue and updates the order record in the DynamoDB table.
 
